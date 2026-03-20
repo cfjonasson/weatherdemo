@@ -1,0 +1,28 @@
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  margin: 40px auto;
+  max-width: 680px;
+  padding: 0 16px;
+  line-height: 1.4;
+}
+
+h1 { margin-bottom: 8px; }
+
+#weather {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fafafa;
+  min-height: 72px;
+}
+
+button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+button:active { transform: translateY(1px); }
+.small { color: #666; font-size: 0.9rem; }
