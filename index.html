@@ -1,15 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Weather in Stockholm</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Väder</title>
 </head>
 <body>
-    <h1>Current Weather in Stockholm</h1>
-    <div id="weather"></div>
-    <button id="refresh">Refresh</button>
-    <script src="app.js"></script>
+  <main class="app" aria-label="Väderapp">
+    <header class="app__header">
+      <div>
+        <h1 class="app__title">Väder just nu</h1>
+        <p class="app__subtitle">Snabb koll på temperatur, vind och väderläge</p>
+      </div>
+
+      <div class="app__controls">
+        <label class="field">
+          <span class="field__label">Stad</span>
+          <select id="city" class="field__control" aria-label="Välj stad"></select>
+        </label>
+
+        <button id="refresh" class="button" type="button">Uppdatera</button>
+      </div>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div class="card__top">
+        <div class="condition">
+          <div id="condition" class="condition__text">—</div>
+          <div id="updated" class="condition__meta small">Senast uppdaterad: —</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="metric">
+          <div class="metric__label">Temperatur</div>
+          <div class="metric__value"><span id="temp">—</span><span class="unit">°C</span></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric__label">Känns som</div>
+          <div class="metric__value"><span id="feels">—</span><span class="unit">°C</span></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric__label">Vind</div>
+          <div class="metric__value"><span id="wind">—</span><span class="unit">m/s</span></div>
+        </div>
+      </div>
+
+      <p class="small card__note">Datakälla: Open‑Meteo. Tider visas i vald stads tidszon när det är möjligt.</p>
+    </section>
+
+    <footer class="footer small">
+      <span>Byggd på GitHub Pages</span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
