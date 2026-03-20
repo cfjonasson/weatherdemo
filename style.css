@@ -161,3 +161,15 @@ body {
   .grid { grid-template-columns: 1fr; }
   .field__control { min-width: 200px; }
 }
+
+/* ===== Fix: dropdown options var vita på vit bakgrund i vissa browsers ===== */
+select,
+select option {
+  background-color: #0f1a33;              /* mörk bakgrund i listan */
+  color: rgba(255, 255, 255, 0.92);       /* ljus text */
+}
+
+.field__control:focus {
+  outline: 2px solid rgba(90, 120, 255, 0.7);
+  outline-offset: 2px;
+}
