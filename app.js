@@ -160,83 +160,102 @@
   }
 
   init();
+})();
 
-  // ── AI Bildgenerator (xAI Aurora / Grok) ─────────────────────────────────
-  (() => {
-    const keyInput    = $("xai-key");
-    const promptInput = $("xai-prompt");
-    const genBtn      = $("xai-generate");
-    const statusEl    = $("xai-status");
-    const resultEl    = $("xai-result");
+// ── AI Bildgenerator (xAI Grok-2-Image / Aurora) ──────────────────────────
+(() => {
+  const getEl = (id) => document.getElementById(id);
 
-    if (!keyInput || !promptInput || !genBtn) return;
+  const keyInput    = getEl("xai-key");
+  const promptInput = getEl("xai-prompt");
+  const genBtn      = getEl("xai-generate");
+  const statusEl    = getEl("xai-status");
+  const resultEl    = getEl("xai-result");
 
-    // Persist API key in sessionStorage so the user doesn't retype it
+  if (!keyInput || !promptInput || !genBtn || !statusEl || !resultEl) return;
+
+  // Restore API key from sessionStorage (cleared when the tab/browser is closed)
+  try {
+    const saved = sessionStorage.getItem("xai_key");
+    if (saved) keyInput.value = saved;
+  } catch {}
+
+  keyInput.addEventListener("change", () => {
+    try { sessionStorage.setItem("xai_key", keyInput.value.trim()); } catch {}
+  });
+
+  function setGenLoading(loading) {
+    genBtn.disabled = loading;
+    genBtn.textContent = loading ? "Genererar…" : "Generera bild";
+  }
+
+  function appendImage(src, alt) {
+    const el = document.createElement("img");
+    el.alt = alt;
+    el.className = "image-gen__img";
+    el.onerror = () => {
+      el.style.display = "none";
+      statusEl.textContent = "Kunde inte ladda bilden från API-svaret.";
+    };
+    el.src = src;
+    resultEl.appendChild(el);
+  }
+
+  genBtn.addEventListener("click", async () => {
+    const apiKey = keyInput.value.trim();
+    const prompt = promptInput.value.trim();
+
+    if (!apiKey) { statusEl.textContent = "Ange en API-nyckel."; return; }
+    if (!prompt)  { statusEl.textContent = "Ange en prompt."; return; }
+
+    setGenLoading(true);
+    statusEl.textContent = "Skickar förfrågan till xAI…";
+    resultEl.innerHTML = "";
+
     try {
-      const saved = sessionStorage.getItem("xai_key");
-      if (saved) keyInput.value = saved;
-    } catch {}
+      const res = await fetch("https://api.x.ai/v1/images/generations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "grok-2-image-1212",
+          prompt,
+          n: 1,
+          response_format: "url",
+        }),
+      });
 
-    keyInput.addEventListener("change", () => {
-      try { sessionStorage.setItem("xai_key", keyInput.value.trim()); } catch {}
-    });
-
-    function setGenLoading(loading) {
-      genBtn.disabled = loading;
-      genBtn.textContent = loading ? "Genererar…" : "Generera bild";
-    }
-
-    genBtn.addEventListener("click", async () => {
-      const apiKey = keyInput.value.trim();
-      const prompt = promptInput.value.trim();
-
-      if (!apiKey) { statusEl.textContent = "Ange en API-nyckel."; return; }
-      if (!prompt)  { statusEl.textContent = "Ange en prompt."; return; }
-
-      setGenLoading(true);
-      statusEl.textContent = "Skickar förfrågan till xAI Aurora…";
-      resultEl.innerHTML   = "";
-
-      try {
-        const res = await fetch("https://api.x.ai/v1/images/generations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({ model: "aurora", prompt, n: 1 }),
-        });
-
-        if (!res.ok) {
-          const errBody = await res.text();
-          let errMsg = `HTTP ${res.status}`;
-          try {
-            const errJson = JSON.parse(errBody);
-            errMsg += `: ${errJson.error?.message ?? errJson.message ?? errBody}`;
-          } catch {
-            errMsg += errBody ? `: ${errBody}` : "";
-          }
-          throw new Error(errMsg);
+      if (!res.ok) {
+        const errBody = await res.text();
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errJson = JSON.parse(errBody);
+          errMsg += `: ${errJson.error?.message ?? errJson.message ?? errBody}`;
+        } catch {
+          errMsg += errBody ? `: ${errBody}` : "";
         }
-
-        const data = await res.json();
-        const images = data.data ?? [];
-
-        if (!images.length) throw new Error("Inget bildresultat i svaret.");
-
-        statusEl.textContent = "Klar!";
-        for (const img of images) {
-          const el = document.createElement("img");
-          el.src  = img.url;
-          el.alt  = prompt;
-          el.className = "image-gen__img";
-          resultEl.appendChild(el);
-        }
-      } catch (err) {
-        statusEl.textContent = `Fel: ${err.message}`;
-      } finally {
-        setGenLoading(false);
+        throw new Error(errMsg);
       }
-    });
-  })();
+
+      const data = await res.json();
+      const images = data.data ?? [];
+
+      if (!images.length) throw new Error("Inget bildresultat i svaret.");
+
+      statusEl.textContent = "Klar!";
+      for (const img of images) {
+        if (img.url) {
+          appendImage(img.url, prompt);
+        } else if (img.b64_json) {
+          appendImage(`data:image/png;base64,${img.b64_json}`, prompt);
+        }
+      }
+    } catch (err) {
+      statusEl.textContent = `Fel: ${err.message}`;
+    } finally {
+      setGenLoading(false);
+    }
+  });
 })();
