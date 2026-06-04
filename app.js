@@ -160,4 +160,76 @@
   }
 
   init();
+
+  // ── AI Bildgenerator (xAI Aurora / Grok) ─────────────────────────────────
+  (() => {
+    const keyInput    = $("xai-key");
+    const promptInput = $("xai-prompt");
+    const genBtn      = $("xai-generate");
+    const statusEl    = $("xai-status");
+    const resultEl    = $("xai-result");
+
+    if (!keyInput || !promptInput || !genBtn) return;
+
+    // Persist API key in sessionStorage so the user doesn't retype it
+    try {
+      const saved = sessionStorage.getItem("xai_key");
+      if (saved) keyInput.value = saved;
+    } catch {}
+
+    keyInput.addEventListener("change", () => {
+      try { sessionStorage.setItem("xai_key", keyInput.value.trim()); } catch {}
+    });
+
+    function setGenLoading(loading) {
+      genBtn.disabled = loading;
+      genBtn.textContent = loading ? "Genererar…" : "Generera bild";
+    }
+
+    genBtn.addEventListener("click", async () => {
+      const apiKey = keyInput.value.trim();
+      const prompt = promptInput.value.trim();
+
+      if (!apiKey) { statusEl.textContent = "Ange en API-nyckel."; return; }
+      if (!prompt)  { statusEl.textContent = "Ange en prompt."; return; }
+
+      setGenLoading(true);
+      statusEl.textContent = "Skickar förfrågan till xAI Aurora…";
+      resultEl.innerHTML   = "";
+
+      try {
+        const res = await fetch("https://api.x.ai/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({ model: "aurora", prompt, n: 1 }),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errBody}`);
+        }
+
+        const data = await res.json();
+        const images = data.data ?? [];
+
+        if (!images.length) throw new Error("Inget bildresultat i svaret.");
+
+        statusEl.textContent = "Klar!";
+        for (const img of images) {
+          const el = document.createElement("img");
+          el.src  = img.url;
+          el.alt  = prompt;
+          el.className = "image-gen__img";
+          resultEl.appendChild(el);
+        }
+      } catch (err) {
+        statusEl.textContent = `Fel: ${err.message}`;
+      } finally {
+        setGenLoading(false);
+      }
+    });
+  })();
 })();
