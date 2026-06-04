@@ -209,7 +209,14 @@
 
         if (!res.ok) {
           const errBody = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errBody}`);
+          let errMsg = `HTTP ${res.status}`;
+          try {
+            const errJson = JSON.parse(errBody);
+            errMsg += `: ${errJson.error?.message ?? errJson.message ?? errBody}`;
+          } catch {
+            errMsg += errBody ? `: ${errBody}` : "";
+          }
+          throw new Error(errMsg);
         }
 
         const data = await res.json();
